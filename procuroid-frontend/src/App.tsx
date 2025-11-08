@@ -9,6 +9,7 @@ import Suppliers from './pages/Suppliers';
 import Calendar from './pages/Calendar';
 import SignIn from './pages/auth/SignIn';
 import SignUp from './pages/auth/Signup';
+import './cursor'; 
 
 function App() {
   return (
