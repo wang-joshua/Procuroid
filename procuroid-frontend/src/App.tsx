@@ -1,4 +1,4 @@
-// src/App.tsx (replace Routes block and wrap with AuthProvider)
+// src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,6 +9,7 @@ import Suppliers from './pages/Suppliers';
 import Calendar from './pages/Calendar';
 import SignIn from './pages/auth/SignIn';
 import SignUp from './pages/auth/Signup';
+import Home from './pages/home'
 import './cursor'; 
 
 function App() {
@@ -16,15 +17,19 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+
+          {/* Protected routes */}
           <Route
             path="/*"
             element={
               <ProtectedRoute>
                 <Layout>
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/orders" element={<Orders />} />
                     <Route path="/suppliers" element={<Suppliers />} />
                     <Route path="/calendar" element={<Calendar />} />
@@ -38,4 +43,5 @@ function App() {
     </Router>
   );
 }
+
 export default App;
