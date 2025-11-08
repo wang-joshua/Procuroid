@@ -1,0 +1,13 @@
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+venv/
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
