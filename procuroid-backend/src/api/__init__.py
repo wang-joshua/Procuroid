@@ -653,7 +653,7 @@ def get_job_quotations(job_id: str):
         quotations = supabase.table("quotations")\
             .select("*, suppliers(*)")\
             .eq("job_id", job_id)\
-            .order("comparison_metrics->overall_recommendation_score", desc=True)\
+            .order("comparison_metrics->overall_recommendation_score", ascending=False)\
             .execute()
         
         # Fetch conversation analyses
@@ -744,7 +744,7 @@ def get_job_meetings(job_id: str):
         meetings = supabase.table("meeting_requests")\
             .select("*, suppliers(*)")\
             .eq("job_id", job_id)\
-            .order("urgency", desc=True)\
+            .order("urgency", ascending=False)\
             .execute()
         
         return jsonify({
