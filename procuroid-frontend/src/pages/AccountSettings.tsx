@@ -39,7 +39,6 @@ export default function AccountSettings() {
     const [language, setLanguage] = useState('English (US)');
     const [timezone, setTimezone] = useState('UTC');
     const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
     const [showPasswordFields, setShowPasswordFields] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
