@@ -287,3 +287,82 @@ export const getProfile = async (): Promise<ProfileResponse> => {
   );
   return response.data;
 };
+
+export interface OrderPayload {
+  supplierType: 'manufacturer' | 'distributor' | 'service_provider';
+  productName: string;
+  productDescription: string;
+  productSpecifications?: string;
+  productCertification?: string;
+  quantityRequired: string;
+  unitOfMeasurement: string;
+  unitPrice?: string;
+  lowerLimit?: string;
+  upperLimit?: string;
+  currency: string;
+  totalPriceEstimate?: string;
+  paymentTerms: string;
+  preferredPaymentMethod: string;
+  requiredDeliveryDate: string;
+  location: string;
+  shippingCost: 'included' | 'separate';
+  packagingDetails?: string;
+  incoterms?: string;
+}
+
+export interface CreateOrderResponse {
+  success: boolean;
+  message?: string;
+  order?: any;
+  error?: string;
+}
+
+export interface GetOrdersResponse {
+  success: boolean;
+  orders?: any[];
+  error?: string;
+}
+
+export const createOrder = async (payload: OrderPayload): Promise<CreateOrderResponse> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await axios.post(
+    `${API_BASE_URL}/orders`,
+    payload,
+    {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      withCredentials: true
+    }
+  );
+  return response.data;
+};
+
+export const getOrders = async (status?: string): Promise<GetOrdersResponse> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+
+  const params = new URLSearchParams();
+  if (status) {
+    params.append('status', status);
+  }
+
+  const response = await axios.get(
+    `${API_BASE_URL}/orders${params.toString() ? `?${params.toString()}` : ''}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      withCredentials: true
+    }
+  );
+  return response.data;
+};

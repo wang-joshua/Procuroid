@@ -16,6 +16,8 @@ from services.database import (
     call_quotation_agent,
     update_profile,
     get_profile,
+    create_order,
+    get_orders,
 )
 from services.llm import extract_call_conclusion
 from services.elevenlabs import initiate_elevenlabs_call, ElevenLabsCallError
@@ -626,4 +628,64 @@ def update_profile_endpoint():
         print(f"Exception in update_profile_endpoint: {e}")
         import traceback
         traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.route("/orders", methods=["POST"])
+@require_auth
+def create_order_endpoint():
+    """
+    Create a new order.
+    Request body should contain order information.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+        
+        # Get the authenticated user's ID from the token
+        authenticated_user_id = request.user["id"]
+        
+        # Create order in database
+        result = create_order(authenticated_user_id, data)
+        
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "message": "Order created successfully",
+                "order": result["order"]
+            }), 201
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get("error", "Failed to create order")
+            }), 500
+    except Exception as e:
+        print(f"Exception in create_order_endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.route("/orders", methods=["GET"])
+@require_auth
+def get_orders_endpoint():
+    """
+    Get all orders for the authenticated user.
+    Query parameters:
+    - status: Optional status filter
+    """
+    try:
+        status = request.args.get("status", None)
+        user_id = request.user["id"]
+        
+        result = get_orders(user_id, status)
+        
+        if result.get("success"):
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+    except Exception as e:
+        print(f"Exception in get_orders_endpoint: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
