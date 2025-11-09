@@ -25,7 +25,7 @@ export default function SignIn() {
           refresh_token: response.session.refresh_token,
         });
         
-        navigate('/');
+        navigate('/dashboard');
       } else {
         setErr(response.error || 'Sign in failed');
       }
