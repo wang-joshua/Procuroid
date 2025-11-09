@@ -628,6 +628,38 @@ def quotation_agent_transcript():
         print("📝 QUOTATION AGENT CALL REPORT")
         print(json.dumps(call_report))
 
+        # Update supplier_calls table with transcript and summary
+        call_id = call_report["call_id"]
+        if call_id:
+            try:
+                # Format transcript as text
+                transcript_text = "\n".join([
+                    f"{turn['speaker']}: {turn['text']}"
+                    for turn in transcript_turns
+                ])
+                
+                # Determine status based on call success
+                status = "completed" if call_connected else "failed"
+                
+                # Update the supplier_calls record
+                update_result = supabase.table("supplier_calls")\
+                    .update({
+                        "transcript": transcript_text,
+                        "summary": summary or "",
+                        "status": status,
+                        "call_id": call_id
+                    })\
+                    .eq("call_id", call_id)\
+                    .execute()
+                
+                if update_result.data:
+                    print(f"✅ Updated supplier_calls for call_id: {call_id}")
+                else:
+                    print(f"⚠️ No supplier_calls record found for call_id: {call_id}")
+                    
+            except Exception as update_error:
+                print(f"❌ Failed to update supplier_calls: {update_error}")
+
         return jsonify({"success": True, "call_report": call_report}), 200
 
     except Exception as e:

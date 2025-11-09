@@ -537,3 +537,56 @@ export const initiateElevenLabsCall = async (
     };
   }
 };
+
+/**
+ * Create a supplier call record in the database
+ * @param callData - The call data to store
+ * @returns Promise with the created record
+ */
+export const createSupplierCall = async (callData: {
+  job_id?: string;
+  supplier_id?: string;
+  supplier_name: string;
+  call_id: string;
+  status: string;
+  user_id?: string;
+}): Promise<any> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('Not authenticated');
+    }
+
+    // Insert into supplier_calls table
+    const { data, error } = await supabase
+      .from('supplier_calls')
+      .insert({
+        job_id: callData.job_id || null,
+        supplier_id: callData.supplier_id || null,
+        supplier_name: callData.supplier_name,
+        call_id: callData.call_id,
+        status: callData.status,
+        user_id: callData.user_id || session.user.id,
+        transcript: '',  // Will be updated by webhook
+        summary: '',     // Will be updated by webhook
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      data: data
+    };
+  } catch (error: any) {
+    console.error('Error creating supplier call record:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to create supplier call record'
+    };
+  }
+};

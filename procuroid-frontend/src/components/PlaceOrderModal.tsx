@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Check, ArrowRight, Phone } from 'lucide-react';
 import { Slider } from '@heroui/react';
-import { createOrder, initiateElevenLabsCall } from '../api/apiCalls';
+import { createOrder, initiateElevenLabsCall, createSupplierCall } from '../api/apiCalls';
 import { useAuth } from '../context/AuthProvider';
 
 interface PlaceOrderModalProps {
@@ -88,6 +88,21 @@ const call_function = async (formData: OrderFormData) => {
     
     if (result.success) {
       console.log(`✅ Call to ${supplier.name} initiated successfully`);
+      
+      // Store supplier call in database
+      const callId = result.data?.call_id || result.data?.id || `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const dbResult = await createSupplierCall({
+        supplier_name: supplier.name,
+        call_id: callId,
+        status: 'initiated',
+      });
+      
+      if (dbResult.success) {
+        console.log(`📝 Stored call record for ${supplier.name}`);
+      } else {
+        console.error(`⚠️ Failed to store call record for ${supplier.name}:`, dbResult.error);
+      }
     } else {
       console.error(`❌ Failed to call ${supplier.name}:`, result.error);
     }
