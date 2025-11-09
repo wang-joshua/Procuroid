@@ -510,4 +510,147 @@ export const getContracts = async (): Promise<GetContractsResponse> => {
     }
   );
   return response.data;
+// ElevenLabs API Configuration from environment variables
+const ELEVENLABS_API_URL = 'https://api.us.elevenlabs.io/v1/convai/twilio/outbound-call';
+const ELEVENLABS_BEARER_TOKEN = import.meta.env.VITE_ELEVENLABS_BEARER_TOKEN;
+const ELEVENLABS_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
+const ELEVENLABS_AGENT_PHONE_NUMBER_ID = import.meta.env.VITE_ELEVENLABS_AGENT_PHONE_NUMBER_ID;
+
+export interface ElevenLabsCallPayload {
+  productName: string;
+  productDescription: string;
+  quantity: string;
+  unitOfMeasurement: string;
+  lowerLimit: string;
+  upperLimit: string;
+  currency: string;
+  requiredDeliveryDate: string;
+  location: string;
+  buyer_company_name?: string;
+  seller_company_name?: string;
+}
+
+/**
+ * Initiate an outbound call via ElevenLabs API
+ * @param toNumber - The supplier's phone number to call
+ * @param formData - The order form data containing product details
+ * @param sellerCompanyName - The supplier/seller company name
+ * @returns Promise with the API response
+ */
+export const initiateElevenLabsCall = async (
+  toNumber: string,
+  formData: ElevenLabsCallPayload,
+  sellerCompanyName: string = 'Supplier'
+): Promise<any> => {
+  try {
+    // Validate required environment variables
+    if (!ELEVENLABS_BEARER_TOKEN) {
+      throw new Error('ELEVENLABS_BEARER_TOKEN is not configured in environment variables');
+    }
+    if (!ELEVENLABS_AGENT_ID) {
+      throw new Error('ELEVENLABS_AGENT_ID is not configured in environment variables');
+    }
+    if (!ELEVENLABS_AGENT_PHONE_NUMBER_ID) {
+      throw new Error('ELEVENLABS_AGENT_PHONE_NUMBER_ID is not configured in environment variables');
+    }
+
+    // Format the payload for ElevenLabs API
+    const payload = {
+      agent_id: ELEVENLABS_AGENT_ID,
+      agent_phone_number_id: ELEVENLABS_AGENT_PHONE_NUMBER_ID,
+      to_number: toNumber,
+      conversation_initiation_client_data: {
+        dynamic_variables: {
+          productName: formData.productName,
+          productDescription: formData.productDescription,
+          quantity: `${formData.quantity} ${formData.unitOfMeasurement}`,
+          lowerLimit: `${formData.currency} ${formData.lowerLimit}`,
+          upperLimit: `${formData.currency} ${formData.upperLimit}`,
+          requiredDeliveryDate: formData.requiredDeliveryDate,
+          location: formData.location,
+          buyer_company_name: formData.buyer_company_name || 'Procuroid Client',
+          seller_company_name: sellerCompanyName,
+        }
+      }
+    };
+
+    // Make the API call to ElevenLabs
+    const response = await axios.post(
+      ELEVENLABS_API_URL,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${ELEVENLABS_BEARER_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return {
+      success: true,
+      data: response.data,
+      message: 'Call initiated successfully'
+    };
+  } catch (error: any) {
+    console.error('Error initiating ElevenLabs call:', error);
+    
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message || 'Failed to initiate call',
+      details: error.response?.data
+    };
+  }
+};
+
+/**
+ * Create a supplier call record in the database
+ * @param callData - The call data to store
+ * @returns Promise with the created record
+ */
+export const createSupplierCall = async (callData: {
+  job_id?: string;
+  supplier_id?: string;
+  supplier_name: string;
+  call_id: string;
+  status: string;
+  user_id?: string;
+}): Promise<any> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('Not authenticated');
+    }
+
+    // Insert into supplier_calls table
+    const { data, error } = await supabase
+      .from('supplier_calls')
+      .insert({
+        job_id: callData.job_id || null,
+        supplier_id: callData.supplier_id || null,
+        supplier_name: callData.supplier_name,
+        call_id: callData.call_id,
+        status: callData.status,
+        user_id: callData.user_id || session.user.id,
+        transcript: '',  // Will be updated by webhook
+        summary: '',     // Will be updated by webhook
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      data: data
+    };
+  } catch (error: any) {
+    console.error('Error creating supplier call record:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to create supplier call record'
+    };
+  }
 };
