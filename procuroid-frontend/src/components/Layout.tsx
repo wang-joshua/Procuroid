@@ -108,7 +108,7 @@ const Layout = ({ children }: LayoutProps) => {
           {/* Logo */}
           <div className="flex h-16 items-center justify-center border-b border-slate-700/50 bg-gradient-to-r from-primary-600/10 to-indigo-600/10 space-x-4">
             <img
-              src="/src/assets/logo.png"
+              src="/assets/logo.png"
               alt="Logo"
               className="h-10 w-10"
             />
