@@ -10,7 +10,6 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showSplash, setShowSplash] = useState(false); // 🔹 new
   const navigate = useNavigate();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -39,10 +38,6 @@ export default function SignIn() {
       setLoading(false);
     }
   };
-  
-  if (showSplash) {
-    return <SplashScreen onComplete={() => navigate('/dashboard')} />;
-  }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gray-50 p-6">
