@@ -5,12 +5,7 @@ import { updateProfile as updateProfileAPI } from '../api/apiCalls';
 import {
     User,
     Lock,
-    Bell,
-    CreditCard,
     Trash2,
-    Globe,
-    Sun,
-    Moon,
     Save,
     LogOut,
     Loader2,
@@ -44,7 +39,6 @@ export default function AccountSettings() {
     const [language, setLanguage] = useState('English (US)');
     const [timezone, setTimezone] = useState('UTC');
     const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
     const [showPasswordFields, setShowPasswordFields] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -237,18 +231,6 @@ export default function AccountSettings() {
             setError(err?.message || 'Failed to save profile.');
         } finally {
             setSaving(false);
-        }
-    };
-
-    const handleDeleteAccount = async () => {
-        if (!window.confirm('Are you sure you want to permanently delete your account? This cannot be undone.')) return;
-        try {
-            const { error } = await supabase.rpc('delete_user');
-            if (error) throw error;
-            await supabase.auth.signOut();
-            navigate('/goodbye');
-        } catch (err: any) {
-            setError(err?.message || 'Failed to delete account.');
         }
     };
 
