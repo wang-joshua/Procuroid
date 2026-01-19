@@ -1,12 +1,67 @@
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
-// Resolve API base URL: prefer env var, otherwise pick based on current host
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080'
-    : 'https://procuroid-369418280809.us-central1.run.app');
+// Define the cloud and local API URLs
+const CLOUD_API_URL = 'https://procuroid-369418280809.us-central1.run.app';
+const LOCAL_API_URL = 'http://localhost:8080';
+
+// Variable to store the active API URL
+let API_BASE_URL = CLOUD_API_URL;
+
+// Function to check if a server is reachable
+const checkServerHealth = async (url: string): Promise<boolean> => {
+  try {
+    const response = await axios.get(`${url}/health`, { 
+      timeout: 3000, // 3 second timeout
+      validateStatus: (status) => status < 500 // Accept any status < 500 as "alive"
+    });
+    return response.status < 500;
+  } catch (error) {
+    console.warn(`Server at ${url} is not reachable:`, error);
+    return false;
+  }
+};
+
+// Initialize API base URL with server health check
+const initializeApiBaseUrl = async (): Promise<string> => {
+  // If VITE_API_BASE_URL is explicitly set, use it
+  if (import.meta.env.VITE_API_BASE_URL) {
+    API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    console.log(`Using API URL from environment: ${API_BASE_URL}`);
+    return API_BASE_URL;
+  }
+
+  // Try cloud server first
+  console.log('Checking cloud server health...');
+  const isCloudActive = await checkServerHealth(CLOUD_API_URL);
+  
+  if (isCloudActive) {
+    API_BASE_URL = CLOUD_API_URL;
+    console.log(`✅ Cloud server is active: ${API_BASE_URL}`);
+    return API_BASE_URL;
+  }
+
+  // Fallback to localhost
+  console.log('Cloud server not available, trying localhost...');
+  const isLocalActive = await checkServerHealth(LOCAL_API_URL);
+  
+  if (isLocalActive) {
+    API_BASE_URL = LOCAL_API_URL;
+    console.log(`✅ Local server is active: ${API_BASE_URL}`);
+    return API_BASE_URL;
+  }
+
+  // If neither is available, default to cloud (will show errors on API calls)
+  API_BASE_URL = CLOUD_API_URL;
+  console.warn('⚠️ No server is reachable, defaulting to cloud URL');
+  return API_BASE_URL;
+};
+
+// Initialize on module load
+initializeApiBaseUrl();
+
+// Function to get current API base URL
+export const getApiBaseUrl = (): string => API_BASE_URL;
 
 export interface SignUpPayload {
   email: string;

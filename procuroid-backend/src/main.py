@@ -27,8 +27,10 @@ if CORS:
     allow_list = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
         "https://procuroid.vercel.app",
-        "https://procuroid-git-main-avihans-projects.vercel.app/",
+        "https://procuroid-git-main-avihans-projects.vercel.app",
         "https://procuroid-cqmnl66py-avihans-projects.vercel.app",
     ]
     CORS(
@@ -36,8 +38,10 @@ if CORS:
         resources={r"/*": {
             "origins": allow_list,
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+            "expose_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True,
+            "max_age": 3600
         }},
         supports_credentials=True,
         automatic_options=True,  # Automatically handle OPTIONS requests
@@ -63,6 +67,16 @@ def root():
             "agents": "AI agent webhooks and processing"
         }
     })
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint for server availability monitoring"""
+    return jsonify({
+        "status": "healthy",
+        "service": "procuroid-backend",
+        "timestamp": os.environ.get("K_REVISION", "local")
+    }), 200
 
 
 if __name__ == "__main__":

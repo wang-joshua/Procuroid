@@ -95,8 +95,12 @@ def health():
     return jsonify({"status": "ok"})
 
 
-@api_bp.route("/auth/signup", methods=["POST"])
+@api_bp.route("/auth/signup", methods=["POST", "OPTIONS"])
 def signup():
+    # Explicitly handle OPTIONS request for CORS preflight
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     data = request.get_json()
     
     if not data:
@@ -125,8 +129,12 @@ def signup():
         return jsonify(result), 400
 
 
-@api_bp.route("/auth/signin", methods=["POST"])
+@api_bp.route("/auth/signin", methods=["POST", "OPTIONS"])
 def signin():
+    # Explicitly handle OPTIONS request for CORS preflight
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     data = request.get_json()
     
     if not data:

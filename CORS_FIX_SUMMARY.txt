@@ -1,0 +1,162 @@
+════════════════════════════════════════════════════════════════════════════
+                    CORS ERROR FIX - QUICK SUMMARY
+════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+--------
+Your frontend (http://localhost:5173) was blocked from accessing your backend
+(https://procuroid-369418280809.us-central1.run.app) due to CORS policy.
+
+ROOT CAUSE:
+-----------
+The deployed backend on Cloud Run doesn't have the proper CORS configuration
+or is running outdated code without CORS support.
+
+SOLUTION APPLIED:
+-----------------
+✅ Enhanced CORS configuration in src/main.py
+✅ Added explicit OPTIONS handling to /auth/signin and /auth/signup
+✅ Added more allowed origins and headers
+✅ Set preflight cache timeout to 1 hour
+
+FILES MODIFIED:
+---------------
+1. procuroid-backend/src/main.py
+   - Enhanced CORS configuration (lines 27-47)
+   
+2. procuroid-backend/src/api/__init__.py
+   - Added OPTIONS handling to signup endpoint (line 98)
+   - Added OPTIONS handling to signin endpoint (line 128)
+
+NEW FILES CREATED:
+------------------
+1. procuroid-backend/CORS_FIX_DEPLOYMENT.md
+   - Detailed deployment guide with troubleshooting
+   
+2. procuroid-backend/deploy.ps1
+   - PowerShell script for easy deployment
+
+════════════════════════════════════════════════════════════════════════════
+                        🚀 DEPLOYMENT STEPS
+════════════════════════════════════════════════════════════════════════════
+
+OPTION 1: Using PowerShell Script (EASIEST)
+--------------------------------------------
+1. Open PowerShell in the procuroid-backend directory
+2. Run: .\deploy.ps1
+3. Follow the prompts
+4. Wait 3-5 minutes for deployment
+
+OPTION 2: Manual Deployment via gcloud CLI
+-------------------------------------------
+1. Open PowerShell/Command Prompt
+2. Navigate to project root:
+   cd C:\Users\Avi\Desktop\AIATL2025
+
+3. Run deployment command:
+   gcloud builds submit --config procuroid-backend/cloudbuild.yaml .
+
+4. Wait for completion (3-5 minutes)
+
+OPTION 3: Automatic via GitHub (If configured)
+-----------------------------------------------
+1. Commit changes:
+   git add .
+   git commit -m "Fix CORS configuration"
+   git push origin main
+
+2. Cloud Build will automatically deploy
+
+════════════════════════════════════════════════════════════════════════════
+                        🧪 TESTING AFTER DEPLOYMENT
+════════════════════════════════════════════════════════════════════════════
+
+1. Test health endpoint:
+   curl https://procuroid-369418280809.us-central1.run.app/health
+
+2. Test from your frontend:
+   - Open http://localhost:5173
+   - Try to sign in
+   - Should work without CORS errors!
+
+3. If still getting errors:
+   - Clear browser cache (Ctrl+Shift+Delete)
+   - Try incognito mode
+   - Hard refresh (Ctrl+Shift+R)
+
+════════════════════════════════════════════════════════════════════════════
+                        📝 WHAT WAS CHANGED
+════════════════════════════════════════════════════════════════════════════
+
+CORS Configuration Changes (main.py):
+--------------------------------------
+BEFORE:
+  - Limited origins
+  - Basic header support
+  - Had trailing slash in one URL
+
+AFTER:
+  + Added localhost:8080 to allowed origins
+  + Added X-Requested-With header support
+  + Added expose_headers configuration
+  + Added max_age for preflight caching (1 hour)
+  + Fixed trailing slash issue
+
+API Endpoint Changes (api/__init__.py):
+---------------------------------------
+BEFORE:
+  @api_bp.route("/auth/signin", methods=["POST"])
+
+AFTER:
+  @api_bp.route("/auth/signin", methods=["POST", "OPTIONS"])
+  def signin():
+      # Explicitly handle OPTIONS request
+      if request.method == "OPTIONS":
+          return jsonify({}), 200
+      ...
+
+════════════════════════════════════════════════════════════════════════════
+                        🔍 TROUBLESHOOTING
+════════════════════════════════════════════════════════════════════════════
+
+If CORS error persists:
+------------------------
+1. Check Cloud Run logs:
+   gcloud run services logs read procuroid --region us-central1 --limit 50
+
+2. Verify deployment timestamp:
+   gcloud run services describe procuroid --region us-central1
+
+3. Look for this in logs: "CORS: allowing ['http://localhost:5173', ...]"
+
+If deployment fails:
+--------------------
+1. Check build logs:
+   gcloud builds list --limit 5
+
+2. Verify gcloud CLI is authenticated:
+   gcloud auth list
+
+3. Check project ID:
+   gcloud config get-value project
+
+════════════════════════════════════════════════════════════════════════════
+                        📚 DOCUMENTATION
+════════════════════════════════════════════════════════════════════════════
+
+Read these files for more details:
+- procuroid-backend/CORS_FIX_DEPLOYMENT.md (Detailed guide)
+- procuroid-backend/DEPLOYMENT.md (General deployment info)
+
+════════════════════════════════════════════════════════════════════════════
+                        ✨ EXPECTED RESULT
+════════════════════════════════════════════════════════════════════════════
+
+After successful deployment:
+✅ Frontend can make requests to backend
+✅ No CORS errors in browser console
+✅ Sign in/Sign up works properly
+✅ All API calls succeed
+
+════════════════════════════════════════════════════════════════════════════
+
